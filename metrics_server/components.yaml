@@ -1,3 +1,5 @@
+# https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+# 上記に対して後述の「追記」部分を追記している
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -137,7 +139,7 @@ spec:
         - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
         - --kubelet-use-node-status-port
         - --metric-resolution=15s
-        - --kubelet-insecure-tls        
+        - --kubelet-insecure-tls # 追記
         image: k8s.gcr.io/metrics-server/metrics-server:v0.6.2
         imagePullPolicy: IfNotPresent
         livenessProbe:

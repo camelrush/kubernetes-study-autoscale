@@ -46,6 +46,17 @@ Kubernetesのリソースのうち、以下の「scaled resource object」を対
     ```
 
 ## 実践
+
+### 注意事項
+
+0. 事前準備
+    本稿では、CPU負荷率を確認するため、`kubectl top`コマンドを使用する。   
+    これを使用するために、環境のk8sにmetrics-serverをインストールする必要がある。  
+    ```sh
+    # metrics serverをデプロイする
+    ```
+    [./metrics_server/component.yaml](./metrics_server/components.yaml)をapplyして、
+
 1. deploymentで3つのpodをdeployする。pod内容はcpuをガンガンに上げるもの。
     ``` sh
     # deploy
@@ -57,12 +68,26 @@ Kubernetesのリソースのうち、以下の「scaled resource object」を対
     hpa-test-deploy-9c464d947-2gtpp   1/1     Running   0          23s
     hpa-test-deploy-9c464d947-fjwhv   1/1     Running   0          23s
     hpa-test-deploy-9c464d947-wl7x9   1/1     Running   0          23s
+
+    # kubectl topでCPU負荷を確認する
+    NAME                               CPU(cores)   MEMORY(bytes)   
+    hpa-test-deploy-7649c8cffb-22zc7   1000m        0Mi
+    hpa-test-deploy-7649c8cffb-8jt2r   1001m        0Mi
+    hpa-test-deploy-7649c8cffb-w2kwj   1001m        0Mi    
     ```
 
-2. 水平ポッドスケーラをデプロイする。
+2. 水平ポッド自動スケーラをデプロイする。
     ```sh
+    # スケーラをデプロイする
+    $ kubectl apply -f ./hpa_sample/hpa.yaml
+    # スケール状況を確認する
+    $ kubectl get HorizontalPodAutoscaler hpa-test
     ```
+
+    NAME       REFERENCE                    TARGETS         MINPODS   MAXPODS   REPLICAS   AGE
+    hpa-test   Deployment/hpa-test-deploy   <unknown>/50%   1         5         3          79s
 
 ### 参考サイト
 - Qiita [KubernetesのPodとNodeのAuto Scalingについて](https://qiita.com/sheepland/items/37ea0b77df9a4b4c9d80)
 - Zenn [kubectl topを使えるようにする](https://zenn.dev/hkw/articles/0ee0f726008a63)
+- 公式 [水平ポッド自動スケーラ(v2) リファレンス](https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2/)
