@@ -1,0 +1,17 @@
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: WebFrontend
+  namespace: default
+spec:
+  # オートスケールさせるターゲットを設定
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: WebFrontend
+  # downscaleする最小値
+  minReplicas: 2
+  # upscaleする最大値
+  maxReplicas: 5
+  # すべてのPodの平均CPU使用率の目標値(％の値を設定する)
+  targetCPUUtilizationPercentage: 70
