@@ -49,43 +49,68 @@ Kubernetesのリソースのうち、以下の「scaled resource object」を対
 
 ### 注意事項
 
-0. 事前準備
+0. 事前準備  
     本稿では、CPU負荷率を確認するため、`kubectl top`コマンドを使用する。   
     これを使用するために、環境のk8sにmetrics-serverをインストールする必要がある。  
+    詳細は[こちらのgithub](https://github.com/kubernetes-sigs/metrics-server/)を参照
     ```sh
     # metrics serverをデプロイする
+    $ kubectl apply -f ./metrics_server/component.yaml
     ```
-    [./metrics_server/component.yaml](./metrics_server/components.yaml)をapplyして、
 
-1. deploymentで3つのpodをdeployする。pod内容はcpuをガンガンに上げるもの。
+1. deploymentで3つのpodをdeployする。
     ``` sh
-    # deploy
+    # デプロイする(初期レプリカは3)
     $ kubectl apply -f ./hpa_sample/deployment.yaml 
 
-    # get pod
+    # Podが3つデプロイされている
+    # pod内容はcpuをガンガンに上げるもの。
     $ kubectl get pods
-    NAME                              READY   STATUS    RESTARTS   AGE
-    hpa-test-deploy-9c464d947-2gtpp   1/1     Running   0          23s
-    hpa-test-deploy-9c464d947-fjwhv   1/1     Running   0          23s
-    hpa-test-deploy-9c464d947-wl7x9   1/1     Running   0          23s
+    NAME                               READY   STATUS    RESTARTS   AGE
+    hpa-test-deploy-7649c8cffb-2b2xm   1/1     Running   0          11s
+    hpa-test-deploy-7649c8cffb-c4dzh   1/1     Running   0          11s
+    hpa-test-deploy-7649c8cffb-qc22b   1/1     Running   0          11s
 
-    # kubectl topでCPU負荷を確認する
-    NAME                               CPU(cores)   MEMORY(bytes)   
-    hpa-test-deploy-7649c8cffb-22zc7   1000m        0Mi
-    hpa-test-deploy-7649c8cffb-8jt2r   1001m        0Mi
-    hpa-test-deploy-7649c8cffb-w2kwj   1001m        0Mi    
+    # top podを実行すると、各podがCPUを大きく使っていることがわかる。
+    $ kubectl top pod
+    NAME                              CPU(cores)   MEMORY(bytes)   
+    hpa-test-deploy-7649c8cffb-2b2xm   996m         0Mi             
+    hpa-test-deploy-7649c8cffb-c4dzh   995m         0Mi             
+    hpa-test-deploy-7649c8cffb-qc22b   995m         0Mi           
+
+    # top nodeでnode全体のCPU負荷を確認する（起動初期は低い）
+    $ kubectl top node
+    NAME             CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%   
+    docker-desktop   204m         5%     1553Mi          82%       
+
+    # 少し時間を置いて再実行するとCPU負荷率が上がっている。
+    $ kubectl top node
+    NAME             CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%   
+    docker-desktop   2683m        67%    1513Mi          80%            
     ```
 
 2. 水平ポッド自動スケーラをデプロイする。
     ```sh
     # スケーラをデプロイする
     $ kubectl apply -f ./hpa_sample/hpa.yaml
-    # スケール状況を確認する
-    $ kubectl get HorizontalPodAutoscaler hpa-test
-    ```
 
-    NAME       REFERENCE                    TARGETS         MINPODS   MAXPODS   REPLICAS   AGE
-    hpa-test   Deployment/hpa-test-deploy   <unknown>/50%   1         5         3          79s
+    # 1分ほど待つ
+
+    # podが5つ(Max)までスケールアウトしていることを確認
+    $ kubectl get pod
+    NAME                              READY   STATUS    RESTARTS   AGE
+    hpa-test-deploy-d89d9c8d9-dbkq9   1/1     Running   0          3m48s
+    hpa-test-deploy-d89d9c8d9-fphvh   1/1     Running   0          36s
+    hpa-test-deploy-d89d9c8d9-pgn9f   1/1     Running   0          3m48s
+    hpa-test-deploy-d89d9c8d9-ss8dp   1/1     Running   0          36s
+    hpa-test-deploy-d89d9c8d9-tl645   1/1     Running   0          3m48s
+
+    # スケール状況を確認する(5つまでスケールしている)
+    $ kubectl get HorizontalPodAutoscaler hpa-test
+    NAME       REFERENCE                    TARGETS    MINPODS   MAXPODS   REPLICAS   AGE
+    hpa-test   Deployment/hpa-test-deploy   390%/50%   1         5         5          4m52s
+
+    ```
 
 ### 参考サイト
 - Qiita [KubernetesのPodとNodeのAuto Scalingについて](https://qiita.com/sheepland/items/37ea0b77df9a4b4c9d80)

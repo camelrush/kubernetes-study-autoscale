@@ -17,3 +17,7 @@ spec:
       - image: busybox
         name: hpa-app
         command: ["dd", "if=/dev/zero", "of=/dev/null"] # CPUを100%使うように
+        resources:
+          requests:
+            cpu: 200m
+            memory: 10Mi
