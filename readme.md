@@ -109,7 +109,6 @@ Kubernetesのリソースのうち、以下の「scaled resource object」を対
     $ kubectl get HorizontalPodAutoscaler hpa-test
     NAME       REFERENCE                    TARGETS    MINPODS   MAXPODS   REPLICAS   AGE
     hpa-test   Deployment/hpa-test-deploy   390%/50%   1         5         5          4m52s
-
     ```
 
 ### 参考サイト
